@@ -1,0 +1,34 @@
+Invoke Lambda functions for all routes 
+----------------------------------------
+
+aws lambda invoke --region us-east-1 --function-name  reinvent_demo_routes_123456 out --output text --cli-read-timeout 0 |  base64 -d &
+
+aws lambda invoke --region us-east-1 --function-name  reinvent_demo_routes_ace out --output text --cli-read-timeout 0 |  base64 -d &
+
+aws lambda invoke --region us-east-1 --function-name  reinvent_demo_routes_bdfm out --output text --cli-read-timeout 0 |  base64 -d &
+
+aws lambda invoke --region us-east-1 --function-name  reinvent_demo_routes_jz out --output text --cli-read-timeout 0 |  base64 -d &
+
+
+Invoke EMR Serverless Spark job
+--------------------------------
+
+        aws emr-serverless start-job-run \
+            --region us-east-1 \
+            --application-id 	00f4k48o1n6dq509 \
+            --execution-role-arn arn:aws:iam::620614497509:role/emrServerlessExecutionRole \
+            --job-driver '{
+                "sparkSubmit": {
+                    "entryPoint": "s3://vasveena-test-demo/jars/reinvent-spark-streaming-demo_2.12-1.0.jar",
+                    "sparkSubmitParameters": "--conf spark.jars=/usr/lib/hudi/hudi-spark-bundle.jar,s3://vasveena-test-demo/jars/reinvent/spark-sql-kinesis_2.13-1.2.1_spark-3.2.jar,s3://vasveena-test-demo/jars/reinvent/commons-pool2-2.11.1.jar --conf spark.serializer=org.apache.spark.serializer.KryoSerializer --conf spark.hadoop.hive.metastore.client.factory.class=com.amazonaws.glue.catalog.metastore.AWSGlueDataCatalogHiveClientFactory --class reinvent.streaming.MTASubwayTripUpdatesKinesisWithHudi"
+                }
+            }' \
+            --configuration-overrides '{
+                  "monitoringConfiguration": {
+                    "s3MonitoringConfiguration": {
+                      "logUri": "s3://vasveena-test-demo/reinvent/serverless/logs"
+                    }
+                  }
+                }'
+
+
