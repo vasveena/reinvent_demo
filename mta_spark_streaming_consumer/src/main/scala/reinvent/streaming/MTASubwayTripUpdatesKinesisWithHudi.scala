@@ -58,6 +58,7 @@ object MTASubwayTripUpdatesKinesisWithHudi extends Serializable {
     val HUDI_CLEANER_POLICY = "hoodie.cleaner.policy"
     val KEEP_LATEST_COMMITS = "KEEP_LATEST_COMMITS"
     val TABLE_TYPE_OPT_KEY="hoodie.datasource.write.table.type"
+    val TABLE_READ_PATHS="hoodie.datasource.read.paths"
 
     // Hive Constants
     
@@ -83,6 +84,8 @@ object MTASubwayTripUpdatesKinesisWithHudi extends Serializable {
                                 .option("streamName", "trip-update-stream")
                                 .option("endpointUrl", "https://kinesis.us-east-1.amazonaws.com")
                                 .option("startingposition", "LATEST")
+                                .option("awsAccessKeyId", "yourAccessKeyId")
+    				.option("awsSecretKey", "yourSecretAccessKey")
                                 .load
 
         //Read from trip status Kinesis data stream
@@ -93,6 +96,8 @@ object MTASubwayTripUpdatesKinesisWithHudi extends Serializable {
                                 .option("streamName", "trip-status-stream")
                                 .option("endpointUrl", "https://kinesis.us-east-1.amazonaws.com")
                                 .option("startingposition", "LATEST")
+				.option("awsAccessKeyId", "yourAccessKeyId")
+                                .option("awsSecretKey", "yourSecretAccessKey")
                                 .load
 
         // define schema of data
@@ -151,7 +156,7 @@ object MTASubwayTripUpdatesKinesisWithHudi extends Serializable {
                 .option(TABLE_TYPE_OPT_KEY, "COPY_ON_WRITE")
                 .option(PRECOMBINE_FIELD_OPT_KEY, "currentTime")
                 .option(RECORDKEY_FIELD_OPT_KEY, "tripId")
-                .option(TABLE_NAME, "hudi_trips_streaming_table")
+                .option(TABLE_NAME, "hudi_trips_kinesis_streaming_table_ts")
                 .option(UPSERT_PARALLELISM, 200)
                 .option(HUDI_CLEANER_POLICY, KEEP_LATEST_COMMITS)
                 .option(S3_CONSISTENCY_CHECK, "true")
@@ -159,6 +164,7 @@ object MTASubwayTripUpdatesKinesisWithHudi extends Serializable {
                 .option(OPERATION_OPT_KEY, UPSERT_OPERATION_OPT_VAL)
                 .option(HIVE_PARTITION_EXTRACTOR_CLASS_OPT_KEY,NONPARTITION_EXTRACTOR_CLASS_OPT_VAL)
                 .option(KEYGENERATOR_CLASS_OPT_KEY,NONPARTITIONED_KEYGENERATOR_CLASS_OPT_VAL)
+                //.option(TABLE_READ_PATHS,"s3://vasveena-test-demo/reinvent/streaming_etl_kinesis_with_hudi_output/")
                 .mode(SaveMode.Append)
                 .save("s3://vasveena-test-demo/reinvent/streaming_etl_kinesis_with_hudi_output/")
             
@@ -174,7 +180,7 @@ object MTASubwayTripUpdatesKinesisWithHudi extends Serializable {
                                        .queryName("MTA")
         			       .trigger(Trigger.ProcessingTime("10 seconds"))
         			       .foreachBatch(myFunc _)
-        			       .option("checkpointLocation", "/tmp/checkpoint")
+        			       .option("checkpointLocation", "s3://vasveena-test-demo/reinvent/checkpoint")
         			       .start()
         			       .awaitTermination()
     }

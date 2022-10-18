@@ -11,7 +11,7 @@ import boto3
 class MTARealTime(object):
 
     def __init__(self):
-        self.url = 'https://api-endpoint.mta.info/Dataservice/mtagtfsfeeds/nyct%2Fgtfs-bdfm'
+        self.url = 'https://api-endpoint.mta.info/Dataservice/mtagtfsfeeds/nyct%2Fgtfs'
         self.api_key = os.environ.get('MTA_API_KEY')
         self.kinesis_tripupdate_stream = 'trip-update-stream'
         self.kinesis_vehicle_stream = 'trip-status-stream'

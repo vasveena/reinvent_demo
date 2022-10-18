@@ -37,5 +37,6 @@ class MTARealTime(object):
             self.produce_trip_updates()
             time.sleep(10)
 
-if __name__ == '__main__':
+def lambda_handler(event, context):
     MTARealTime().run()
+    return None

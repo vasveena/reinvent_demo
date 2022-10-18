@@ -1,21 +1,25 @@
 import os
 import time
 from google.protobuf.json_format import MessageToJson
+from kafka import KafkaProducer
 from google.transit import gtfs_realtime_pb2
 import requests
 from json import dumps
 import underground
 from underground import metadata, feed
-import boto3
+import logging
+
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
 
 class MTARealTime(object):
 
     def __init__(self):
-        self.url = 'https://api-endpoint.mta.info/Dataservice/mtagtfsfeeds/nyct%2Fgtfs-bdfm'
+        self.url = 'https://api-endpoint.mta.info/Dataservice/mtagtfsfeeds/nyct%2Fgtfs'
         self.api_key = os.environ.get('MTA_API_KEY')
-        self.kinesis_tripupdate_stream = 'trip-update-stream'
-        self.kinesis_vehicle_stream = 'trip-status-stream'
-        self.kinesis_client = boto3.client('kinesis', region_name='us-east-1')
+        self.kafka_tripupdate_topic = 'trip_update_topic'
+        self.kafka_vehicle_topic = 'trip_status_topic'
+        self.kafka_producer = KafkaProducer(security_protocol="SSL", bootstrap_servers=['b-3.democluster2.exng22.c17.kafka.us-east-1.amazonaws.com:9094','b-2.democluster2.exng22.c17.kafka.us-east-1.amazonaws.com:9094','b-1.democluster2.exng22.c17.kafka.us-east-1.amazonaws.com:9094'])
 
     def produce_trip_updates(self):
         feed = gtfs_realtime_pb2.FeedMessage()
@@ -26,11 +30,12 @@ class MTARealTime(object):
             if entity.HasField('trip_update'):
                 feed_tu_json = MessageToJson(entity.trip_update)
                 update_tu_json = str(feed_tu_json.replace('\n', '').replace(' ','').strip()).encode('utf-8')
-                self.kinesis_client.put_record(StreamName=self.kinesis_tripupdate_stream,Data=update_tu_json,PartitionKey="trip.tripId")
+                self.kafka_producer.send(topic=self.kafka_tripupdate_topic, value=update_tu_json)
             if entity.HasField('vehicle'):
                 feed_vh_json = MessageToJson(entity.vehicle)
                 update_vh_json = str(feed_vh_json.replace('\n', '').replace(' ','').strip()).encode('utf-8')
-                self.kinesis_client.put_record(StreamName=self.kinesis_vehicle_stream,Data=update_vh_json,PartitionKey="trip.tripId")
+                self.kafka_producer.send(topic=self.kafka_vehicle_topic, value=update_vh_json)
+        self.kafka_producer.flush()
 
     def run(self):
         while True:

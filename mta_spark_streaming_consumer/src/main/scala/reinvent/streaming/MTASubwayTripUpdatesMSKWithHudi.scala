@@ -166,7 +166,7 @@ object MTASubwayTripUpdatesMSKWithHudi extends Serializable {
                 .option(TABLE_TYPE_OPT_KEY, "COPY_ON_WRITE")
                 .option(PRECOMBINE_FIELD_OPT_KEY, "currentTime")
                 .option(RECORDKEY_FIELD_OPT_KEY, "tripId")
-                .option(TABLE_NAME, "hudi_trips_streaming_table")
+                .option(TABLE_NAME, "hudi_trips_kafka_streaming_table")
                 .option(UPSERT_PARALLELISM, 200)
                 .option(HUDI_CLEANER_POLICY, KEEP_LATEST_COMMITS)
                 .option(S3_CONSISTENCY_CHECK, "true")
